@@ -4,6 +4,14 @@ from transmission_rpc.error import TransmissionError
 import os
 from datetime import datetime
 
+def has_active_torrents(client):
+    torrents = client.get_torrents()
+
+    return any(
+        t.rate_download > 0 or t.rate_upload > 0
+        for t in torrents
+    )
+
 
 def shutdown_now():
     os.system('shutdown -h now')
@@ -40,17 +48,22 @@ def main():
             host="localhost",
             port=9091,
             #if uses authentication
-            username="Username",
+            username="UserName",
             password="Password"
         )
 
-        print("Connected to Transmission RPC")
-        all_downloaded(client)
-        stop_seeding_torrents(client)
-        currnt_time = datetime.now().time()
-        #print(currnt_time)
-        if currnt_time.hour >= 5 or currnt_time.hour < 6:
-            shutdown_now()
+        #print("Connected to Transmission RPC")
+
+        if has_active_torrents(client):
+            all_downloaded(client)
+            stop_seeding_torrents(client)
+            currnt_time = datetime.now().time()
+            #print(currnt_time)
+            if currnt_time.hour >= 5 and currnt_time.hour < 6:
+                shutdown_now()
+            else:
+                return
+            
         else:
             return
 
